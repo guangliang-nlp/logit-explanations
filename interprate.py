@@ -233,7 +233,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--name_path', help="path/name of model", type=str, default='gpt2-large')
-    parser.add_argument('--dataset', help="linguistic_phenomena", type=str)
+    parser.add_argument('--dataset', help="linguistic_phenomena", type=str, default='winogender')
+    parser.add_argument('--explanation_type', default='ours', type=str)
 
 
     args = parser.parse_args()
