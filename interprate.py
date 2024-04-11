@@ -216,7 +216,7 @@ def main(args):
 
     if 'winogender' in dataset:
         os.makedirs(f'./results/{dataset}', exist_ok=True)
-        save_dir = f'./results/{dataset}/{dataset}_{name_path}_{explanation_type}_{str(num_attractors)}.json'
+        save_dir = f'./results/{dataset}/{dataset}_{name_path}_{explanation_type}.json'
     elif dataset == 'ioi':
         os.makedirs(f'./results/ioi', exist_ok=True)
         save_dir = f'./results/ioi/{dataset}_{name_path}_{explanation_type}.json'
