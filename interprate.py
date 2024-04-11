@@ -215,8 +215,11 @@ def main(args):
     print('explanations_dict', explanations_dict.keys())
 
     if 'winogender' in dataset:
+        name = name_path
+        if "llama" in name:
+            name = "llama2"
         os.makedirs(f'./results/{dataset}', exist_ok=True)
-        save_dir = f'./results/{dataset}/{dataset}_{name_path}_{explanation_type}.json'
+        save_dir = f'./results/{dataset}/{dataset}_{name}_{explanation_type}.json'
     elif dataset == 'ioi':
         os.makedirs(f'./results/ioi', exist_ok=True)
         save_dir = f'./results/ioi/{dataset}_{name_path}_{explanation_type}.json'
