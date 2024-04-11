@@ -15,7 +15,7 @@ from lm_saliency import *
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-our_methods = ['logit_aff_x_j', 'logit_aff_x_j_alti']
+our_methods = ['logit_aff_x_j_alti']#['logit_aff_x_j', 'logit_aff_x_j_alti']
 
 """
 def read_sva_dataset():
@@ -239,30 +239,27 @@ def main(args):
     save_logits_preds(info_sentence, dataset, name_path)
     print('explanations_dict', explanations_dict.keys())
 
-    if 'sva' in dataset:
+    if 'winogender' in dataset:
         os.makedirs(f'./results/{dataset}', exist_ok=True)
         save_dir = f'./results/{dataset}/{dataset}_{name_path}_{explanation_type}_{str(num_attractors)}.json'
     elif dataset == 'ioi':
         os.makedirs(f'./results/ioi', exist_ok=True)
         save_dir = f'./results/ioi/{dataset}_{name_path}_{explanation_type}.json'
-    else:
-        os.makedirs(f'./results/blimp', exist_ok=True)
-        save_dir = f'./results/blimp/{dataset}_{name_path}_{explanation_type}.json'
+
     with open(save_dir, 'w') as fp:
         json.dump(explanations_dict, fp)
-    if 'ours' in explanation_type:
-        # Save logits info
-        os.makedirs(f'./results/logits', exist_ok=True)
-        with open(f'./results/logits/{dataset}_{name_path}.pickle', 'wb') as handle:
-            pickle.dump(logits_modules_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    # Save logits info
+    os.makedirs(f'./results/logits', exist_ok=True)
+    with open(f'./results/logits/{dataset}_{name_path}.pickle', 'wb') as handle:
+        pickle.dump(logits_modules_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--name_path', help="path/name of model", type=str, default='gpt2-large')
     parser.add_argument('--dataset', help="linguistic_phenomena", type=str)
-    parser.add_argument('--explanation_type', help="type of explanation: ours/erasure/grad_norm/grad_inp", type=str,
-                        default='ours')
+
 
     args = parser.parse_args()
 
