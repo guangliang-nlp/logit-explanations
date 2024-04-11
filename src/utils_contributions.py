@@ -1,6 +1,6 @@
 #@title Utilities
 
-
+from transformers import LlamaTokenizer, LlamaForCausalLM
 import numpy as np
 import itertools
 import torch
@@ -61,6 +61,14 @@ def load_model_tokenizer(name_path, only_tokenizer=False):
         tokenizer = GPT2Tokenizer.from_pretrained(name_path)
         if only_tokenizer == False:
             model = GPT2LMHeadModel.from_pretrained(name_path)
+    elif "llama" in name_path:
+        tokenizer = LlamaTokenizer.from_pretrained(name_path)
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "left"
+
+        model = LlamaForCausalLM.from_pretrained(name_path, device_map='auto', output_attentions=True,
+                                                 return_dict=True)
+
     else:
         tokenizer = AutoTokenizer.from_pretrained(name_path)
         if only_tokenizer == False:
