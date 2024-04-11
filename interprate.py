@@ -177,63 +177,38 @@ def main(args):
                 explanations_dict['erasure'].append(contra_explanation.tolist())
             continue
 
-        if 'ours' in explanation_type:
-            # Run inference
-            logits, hidden_states, attentions = model_wrapped(pt_batch)
-            correct_id_logit = logits[0, -1, CORRECT_ID].item()
-            foil_id_logit = logits[0, -1, FOIL_ID].item()
-            info_sentence.append([text, correct_id_logit - foil_id_logit, CORRECT_ID, FOIL_ID])
+        # Run inference
+        logits, hidden_states, attentions = model_wrapped(pt_batch)
+        correct_id_logit = logits[0, -1, CORRECT_ID].item()
+        foil_id_logit = logits[0, -1, FOIL_ID].item()
+        info_sentence.append([text, correct_id_logit - foil_id_logit, CORRECT_ID, FOIL_ID])
 
-            # Our Approach (layerwise logits contributions)
-            # Contrastive explanation
-            token = [CORRECT_ID, FOIL_ID]
-            logit_trans_vect_dict, logits_modules, layer_alti_data = model_wrapped.get_logit_contributions(
+        # Our Approach (layerwise logits contributions)
+        # Contrastive explanation
+        token = [CORRECT_ID, FOIL_ID]
+        logit_trans_vect_dict, logits_modules, layer_alti_data = model_wrapped.get_logit_contributions(
                 hidden_states, attentions, token)
-            # ALTI results
-            contributions_mix_alti = utils_contributions.compute_alti(layer_alti_data)
-            methods_decomp = ['aff_x_j']  # Logits Affine part of layer-wise decomposition
-            # Track layer-wise Attn and MLPs contributions to input
-            alti_lg_dict = track2input_tokens(logit_trans_vect_dict, methods_decomp, contributions_mix_alti, token)
+        # ALTI results
+        contributions_mix_alti = utils_contributions.compute_alti(layer_alti_data)
+        methods_decomp = ['aff_x_j']  # Logits Affine part of layer-wise decomposition
+        # Track layer-wise Attn and MLPs contributions to input
+        alti_lg_dict = track2input_tokens(logit_trans_vect_dict, methods_decomp, contributions_mix_alti, token)
 
-            for method in our_methods:
-                # Get logit difference between tokens and sum across layers
-                contrastive_contributions = (alti_lg_dict[method][0] - alti_lg_dict[method][1]).sum(0)
-                explanations_dict[method].append(contrastive_contributions.tolist())
-                # if method == 'logit_attn_full' or method == 'logit_attn_full_alti':
-                for layer in range(num_layers):
-                    contrastive_contributions = (alti_lg_dict[method][0][layer] - alti_lg_dict[method][1][layer])
-                    explanations_dict[f'{method}_layer_{str(layer)}'].append(contrastive_contributions.tolist())
+        for method in our_methods:
+            # Get logit difference between tokens and sum across layers
+            contrastive_contributions = (alti_lg_dict[method][0] - alti_lg_dict[method][1]).sum(0)
+            explanations_dict[method].append(contrastive_contributions.tolist())
+            # if method == 'logit_attn_full' or method == 'logit_attn_full_alti':
+            for layer in range(num_layers):
+                contrastive_contributions = (alti_lg_dict[method][0][layer] - alti_lg_dict[method][1][layer])
+                explanations_dict[f'{method}_layer_{str(layer)}'].append(contrastive_contributions.tolist())
 
             # Add difference logits
-            logits_modules['correct_id_logit'] = correct_id_logit
-            logits_modules['foil_id_logit'] = foil_id_logit
-            logits_modules_list.append(logits_modules)
+        logits_modules['correct_id_logit'] = correct_id_logit
+        logits_modules['foil_id_logit'] = foil_id_logit
+        logits_modules_list.append(logits_modules)
 
-        else:
-            # Kayo Yin results
-            input = input.strip() + " "
-            input_tokens = tokenizer(input)['input_ids']
-            attention_ids = tokenizer(input)['attention_mask']
 
-            if explanation_type == 'erasure':
-                contra_explanation = erasure_scores(model, input_tokens, attention_ids, correct=CORRECT_ID,
-                                                    foil=FOIL_ID, normalize=True)
-                explanations_dict['erasure'].append(contra_explanation.tolist())
-
-            elif 'grad' in explanation_type:
-                saliency_matrix, embd_matrix = saliency(model, input_tokens, attention_ids, foil=FOIL_ID)
-                contra_explanation = l1_grad_norm(saliency_matrix, normalize=True)
-                explanations_dict['grad_norm'].append(contra_explanation.tolist())
-                contra_explanation = input_x_gradient(saliency_matrix, embd_matrix, normalize=True)
-                explanations_dict['grad_inp'].append(contra_explanation.tolist())
-
-                model.zero_grad()
-                saliency_matrix, embd_matrix = saliency(model, input_tokens, attention_ids, correct=CORRECT_ID,
-                                                        foil=FOIL_ID)
-                contra_explanation = l1_grad_norm(saliency_matrix, normalize=True)
-                explanations_dict['grad_norm_2'].append(contra_explanation.tolist())
-                contra_explanation = input_x_gradient(saliency_matrix, embd_matrix, normalize=True)
-                explanations_dict['grad_inp_2'].append(contra_explanation.tolist())
 
     name_path = name_path.replace('/', '-')
     save_logits_preds(info_sentence, dataset, name_path)
